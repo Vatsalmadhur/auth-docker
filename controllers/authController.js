@@ -5,7 +5,6 @@ const User = require('../models/userModel');
 const jwt= require('jsonwebtoken');
 const authMiddleware = require('../middlewares/authMiddleware');
 const nodemailer = require("nodemailer");
-require('dotenv').config();
 router.post('/login',async (req,res)=>{
     try{
     const {email,password}=req.body;
@@ -43,8 +42,7 @@ router.post('/register',async (req,res)=>{
 })
 
 router.get('/profile',authMiddleware,async (req,res)=>{
- console.log(req);
-    const user= await User.findById(req.user).select("-password");
+    const user= await User.findOne({email:req.user.email}).select("-password");
     if(!user)
     return res.status(404).json({message:"User Not found"});
     res.json(user);
