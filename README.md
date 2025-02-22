@@ -1,135 +1,142 @@
 # Auth-Docker
 
-A Node.js authentication service with JWT-based password reset functionality, Dockerized for easy deployment.
+A Node.js-based authentication system with Docker containerization, featuring user registration, login, password reset, and JWT authentication with rate limiting.
 
-## 🛠️ Features
+## Features
+- User Registration and Login
+- Password Reset Functionality
+- JWT Authentication
+- Dockerized Environment
+- Rate Limiting for API Protection
 
-- User registration and login
-- JWT-based authentication
-- Password reset via email
-- Docker support for containerized deployment
+## Prerequisites
+- Docker and Docker Compose installed
 
----
-
-## 📦 Project Structure
-
+## Project Structure
 ```
+.
 ├── Dockerfile
 ├── docker-compose.yml
-├── .env
 ├── package.json
 ├── app.js
-└── routes/
-    ├── auth.js
-    └── user.js
+├── routes
+│   ├── auth.js
+└── .env
 ```
 
----
+## Environment Variables
+Create a `.env` file in the root directory with the following:
 
-## 🚀 Setup and Run
-
-### Prerequisites
-
-Ensure you have the following installed:
-
-- [Docker](https://www.docker.com/)
-- Docker Compose
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/yourusername/auth-docker.git
-cd auth-docker
 ```
-
-### 2. Set up the environment variables
-
-Create a `.env` file in the project root:
-
-```env
-# Server Configuration
 PORT=3000
-
-# Database Configuration
-MONGO_URI=mongodb+srv://your_user:your_pass@cluster.mongodb.net/auth
-
-# JWT Secrets
-JWT_SECRET="your_jwt_secret"
-REFRESH_SECRET="your_refresh_secret"
-
-# Email Configuration
+JWT_SECRET=your_jwt_secret
+REFRESH_SECRET=your_refresh_secret
 EMAIL=your_email@gmail.com
 PASS=your_email_password
 ```
 
-### 3. Build and Run the Docker Containers
+## Docker Setup
+
+1. **Build Docker Image:**
 
 ```bash
-docker-compose up --build
+docker-compose build
 ```
 
-The service will be available at `http://localhost:3000`
-
----
-
-## 📋 API Endpoints
-
-### 1. User Registration
+2. **Run Docker Container:**
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+docker-compose up
+```
+
+The API will be available at `http://localhost:3000/auth`
+
+## API Endpoints
+
+### 1. Register a User
+```bash
+curl -X POST "http://localhost:3000/auth/register" \
      -H "Content-Type: application/json" \
-     -d '{"email":"user@example.com", "password":"password123"}'
+     -d '{"email":"user@example.com", "password":"yourpassword"}'
 ```
 
-### 2. User Login
-
+### 2. Login
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST "http://localhost:3000/auth/login" \
      -H "Content-Type: application/json" \
-     -d '{"email":"user@example.com", "password":"password123"}'
+     -d '{"email":"user@example.com", "password":"yourpassword"}'
 ```
 
-### 3. Password Reset Request
-
+### 3. Refresh Token
 ```bash
-curl -X POST http://localhost:3000/auth/reset-password-request \
+curl -X POST "http://localhost:3000/auth/refresh" \
+     -H "Content-Type: application/json" \
+     -d '{"token":"your_refresh_token"}'
+```
+
+### 4. Logout
+```bash
+curl -X POST "http://localhost:3000/auth/logout" \
+     -H "Content-Type: application/json" \
+     -d '{"token":"your_refresh_token"}'
+```
+
+### 5. Request Password Reset
+```bash
+curl -X POST "http://localhost:3000/auth/reset-password-request" \
      -H "Content-Type: application/json" \
      -d '{"email":"user@example.com"}'
 ```
 
-### 4. Reset Password
-
+### 6. Reset Password
 ```bash
-curl -X POST http://localhost:3000/auth/reset-password \
+curl -X POST "http://localhost:3000/auth/reset-password" \
      -H "Content-Type: application/json" \
-     -d '{"token":"your_reset_token", "newPass":"newpassword123"}'
+     -d '{"token":"reset_token", "newPass":"newpassword"}'
 ```
 
----
+### 7. Profile
+```bash
+curl -X GET "http://localhost:3000/auth/profile" \
+     -H "Authorization: Bearer your_access_token"
+```
 
-## 🧪 Testing the Service
+## Rate Limiting
 
-You can verify the Docker containers are running with:
+The system implements rate limiting to restrict the number of requests per user:
+- Limit: 100 requests per 15 minutes.
+
+### Shell Script to Test Rate Limiting
+
+Create a file `test_rate_limit.sh` with the following content:
 
 ```bash
-docker ps
+#!/bin/bash
+
+for i in {1..110}
+do
+  echo "Request #$i"
+  curl -X GET "http://localhost:3000/auth/profile" \
+       -H "Authorization: Bearer your_access_token"
+  echo "\n"
+  sleep 1
+done
 ```
 
-Check logs:
+Run the script:
 
 ```bash
-docker-compose logs -f
+bash test_rate_limit.sh
 ```
 
----
+You should start receiving `429 Too Many Requests` after the 100th request.
 
-## 📖 Notes
+## Stop Docker Containers
 
-- Ensure the `.env` file is updated with valid MongoDB and email credentials.
-- Adjust `PORT` if needed.
+```bash
+docker-compose down
+```
 
-## 📜 License
-
-This project is licensed under the MIT License.
+## License
+MIT License
 
